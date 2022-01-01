@@ -1,7 +1,7 @@
 const HttpError = require('../models/http-error');
-const { v4: uuidv4 } = require('uuid');
 const { validationResult } = require('express-validator');
 const getCoordsFromAddress = require('../utils/locations');
+const Place = require('../models/place');
 
 const DUMMY_PLACES = [
   {
@@ -14,13 +14,19 @@ const DUMMY_PLACES = [
   },
 ];
 
-function getPlaceById(req, res) {
+async function getPlaceById(req, res) {
   const { pid } = req.params;
-  const place = DUMMY_PLACES.find(p => p.id === pid);
+  let place;
+  try {
+    place = await Place.findById(pid);
+  } catch (error) {
+    const err = new HttpError('This place could not be found', 500);
+    return next(err);
+  }
   if (!place) {
     throw new HttpError('This place could not be found', 404);
   }
-  res.json({ place });
+  res.json({ place: place.toObject({ getters: true }) });
 }
 
 function getPlacesByUserId(req, res, next) {
@@ -32,20 +38,34 @@ function getPlacesByUserId(req, res, next) {
   res.json({ places });
 }
 
-function createPlace(req, res, next) {
+async function createPlace(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) throw new HttpError('Invalid inputs');
   const { title, description, address, creator } = req.body;
-  const coordinates = getCoordsFromAddress(address);
-  const place = {
-    id: uuidv4(),
+  let coordinates;
+  try {
+    coordinates = await getCoordsFromAddress(address);
+  } catch (error) {
+    const err = new HttpError('Could not get the coordinates', 500);
+    return next(err);
+  }
+  const place = new Place({
     title,
     description,
+    image:
+      'https://upload.wikimedia.org/wikipedia/commons/8/8e/Empire_State_Building-_Day_into_Night_%2821637448828%29.jpg',
     address,
     creator,
     location: coordinates,
-  };
-  DUMMY_PLACES.push(place);
+  });
+
+  try {
+    await place.save();
+  } catch (err) {
+    const error = new HttpError('Could not create place', 500);
+    return next(error);
+  }
+
   res.status(201).json({ place });
 }
 
