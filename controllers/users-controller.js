@@ -14,7 +14,7 @@ async function getAllUsers(req, res, next) {
 
 async function signup(req, res, next) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) throw new HttpError('Invalid inputs');
+  if (!errors.isEmpty()) return next(new HttpError('Invalid inputs'));
   const { name, email, password } = req.body;
   let existingUser;
   try {
