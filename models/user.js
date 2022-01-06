@@ -1,5 +1,4 @@
 const { model, Schema, Types } = require('mongoose');
-const uniqueValidator = require('mongoose-unique-validator');
 
 const userSchema = new Schema({
   name: { type: String, required: true },
@@ -8,7 +7,5 @@ const userSchema = new Schema({
   image: { type: String, required: true },
   places: [{ type: Types.ObjectId, required: true, ref: 'Place' }],
 });
-
-userSchema.plugin(uniqueValidator);
 
 module.exports = model('User', userSchema);

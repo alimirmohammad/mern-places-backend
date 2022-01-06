@@ -8,8 +8,8 @@ async function getCoordsFromAddress(address) {
   const data = res.data;
   const coords = data?.features[0]?.geometry?.coordinates;
   return {
-    lat: coords ? coords[0] : 51.59374293965505,
-    lng: coords ? coords[1] : -0.09783556998624243,
+    lat: coords ? coords[1] : 51.59374293965505,
+    lng: coords ? coords[0] : -0.09783556998624243,
   };
 }
 
