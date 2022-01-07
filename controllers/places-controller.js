@@ -44,7 +44,7 @@ async function getPlacesByUserId(req, res, next) {
 async function createPlace(req, res, next) {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return next(new HttpError('Invalid inputs'));
-  const { title, description, address, creator } = req.body;
+  const { title, description, address } = req.body;
   let coordinates;
   try {
     coordinates = await getCoordsFromAddress(address);
@@ -57,12 +57,12 @@ async function createPlace(req, res, next) {
     description,
     image: req.file.path,
     address,
-    creator,
+    creator: req.userData.userId,
     location: coordinates,
   });
 
   try {
-    const user = await User.findById(creator);
+    const user = await User.findById(req.userData.userId);
     if (!user)
       return next(new HttpError('The creator user ID does not exist.', 404));
 
@@ -94,6 +94,10 @@ async function updatePlace(req, res, next) {
   if (!place) {
     return next(new HttpError('This place could not be found', 404));
   }
+
+  if (place.creator.toString() !== req.userData.userId)
+    return next(new HttpError('Unauthorized', 403));
+
   place.title = title;
   place.description = description;
   try {
@@ -118,6 +122,10 @@ async function deletePlace(req, res, next) {
   if (!place) {
     return next(HttpError('This place could not be found', 404));
   }
+
+  if (place.creator.id !== req.userData.userId)
+    return next(new HttpError('Unauthorized', 403));
+
   try {
     const imagePath = place.image;
     const session = await startSession();
