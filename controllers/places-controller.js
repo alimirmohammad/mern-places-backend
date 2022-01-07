@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const { startSession } = require('mongoose');
 const HttpError = require('../models/http-error');
 const { validationResult } = require('express-validator');
@@ -53,8 +55,7 @@ async function createPlace(req, res, next) {
   const place = new Place({
     title,
     description,
-    image:
-      'https://upload.wikimedia.org/wikipedia/commons/8/8e/Empire_State_Building-_Day_into_Night_%2821637448828%29.jpg',
+    image: req.file.path,
     address,
     creator,
     location: coordinates,
@@ -118,12 +119,14 @@ async function deletePlace(req, res, next) {
     return next(HttpError('This place could not be found', 404));
   }
   try {
+    const imagePath = place.image;
     const session = await startSession();
     session.startTransaction();
     await place.remove({ session });
     place.creator.places.pull(place);
     await place.creator.save({ session });
     await session.commitTransaction();
+    fs.unlink(imagePath, console.error);
   } catch (error) {
     const err = new HttpError('This place could not be deleted', 500);
     return next(err);

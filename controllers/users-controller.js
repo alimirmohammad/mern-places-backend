@@ -32,8 +32,7 @@ async function signup(req, res, next) {
     email,
     password,
     places: [],
-    image:
-      'https://image.freepik.com/free-photo/pleasant-looking-serious-man-stands-profile-has-confident-expression-wears-casual-white-t-shirt_273609-16959.jpg',
+    image: req.file.path,
   });
   try {
     await createdUser.save();

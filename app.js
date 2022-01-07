@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const express = require('express');
 const HttpError = require('./models/http-error');
 const placesRoutes = require('./routes/places-routes');
@@ -8,6 +10,8 @@ require('dotenv').config({ path: path.join(__dirname, '.env.local') });
 
 const app = express();
 app.use(express.json());
+app.use('/uploads/images', express.static(path.join('uploads', 'images')));
+
 app.use(function (req, res, next) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader(
@@ -26,6 +30,9 @@ app.use(function (req, res, next) {
 });
 
 app.use(function (error, req, res, next) {
+  if (req.file) {
+    fs.unlink(req.file.path, console.error);
+  }
   if (res.headerSent) {
     return next(error);
   }
